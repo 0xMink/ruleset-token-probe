@@ -1,0 +1,17 @@
+name: probe
+on: { workflow_dispatch: {} }
+permissions: { contents: read }
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read rulesets with the ordinary token
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+        run: |
+          id=$(gh api repos/${{ github.repository }}/rulesets --jq '.[0].id')
+          echo "LIST_KEYS=$(gh api repos/${{ github.repository }}/rulesets --jq '.[0] | keys | join(",")')"
+          echo "ONE_KEYS=$(gh api repos/${{ github.repository }}/rulesets/$id --jq 'keys | join(",")')"
+          echo "BYPASS=$(gh api repos/${{ github.repository }}/rulesets/$id --jq '.bypass_actors // "NOT_RETURNED" | tostring')"
+          echo "RULES=$(gh api repos/${{ github.repository }}/rulesets/$id --jq '[.rules[].type] | join(",")')"
+          echo "PR_PARAMS=$(gh api repos/${{ github.repository }}/rulesets/$id --jq '.rules[] | select(.type=="pull_request") | .parameters | tostring')"
+          echo "CODEOWNERS_ERRORS=$(gh api repos/${{ github.repository }}/codeowners/errors --jq '.errors | length' 2>&1 | tail -1)"
